@@ -15,11 +15,16 @@
   }
 
   .camera {
-  max-width: 100%;
+    display: none;
+    max-width: 100%;
   }
 
   #photoTaken {
     max-width: 100%;
+  }
+
+  #file {
+    display: none;
   }
   </style>
 </head>
@@ -44,6 +49,10 @@
     <div>
       <button id="startCameraBtn">Start Camera</button>
       <button id="takePhotoBtn">Take Photo</button>
+      <button id="loadFileBtn">
+        Load File
+      </button>
+      <input type="file" id="file" onchange="loadImageFromFile();" accept=".jpg,.jpeg,.png,.bmp" />
     </div>
     <br/>
     <video class="camera" muted autoplay="autoplay" playsinline="playsinline" webkit-playsinline></video>
@@ -88,6 +97,11 @@
     document.getElementById("photoTaken").src = src;
   });
   
+  document.getElementById("loadFileBtn").addEventListener('click', async (event) => {
+    document.getElementById("file").click();
+  });
+  
+
   document.getElementById("photoTaken").onload = function(){
     let img = document.getElementById("photoTaken");
     document.getElementById("info").innerText = "Image Width: " + img.naturalWidth +"\nImage Height: " + img.naturalHeight;
@@ -139,6 +153,7 @@
   
   function play(options) {
     stop(); // close before play
+    video.style.display = "block";
     let constraints = {};
   
     if (options.deviceId){
@@ -193,6 +208,23 @@
     let ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, w, h);
     return canvas.toDataURL("image/jpeg")
+  }
+
+  function loadImageFromFile(){
+    let fileInput = document.getElementById("file");
+    let files = fileInput.files;
+    if (files.length == 0) {
+      return;
+    }
+    let file = files[0];
+    fileReader = new FileReader();
+    fileReader.onload = function(e){
+      document.getElementById("photoTaken").src = e.target.result;
+    };
+    fileReader.onerror = function () {
+      console.warn('oops, something went wrong.');
+    };
+    fileReader.readAsDataURL(file);
   }
   </script>
 </body>
