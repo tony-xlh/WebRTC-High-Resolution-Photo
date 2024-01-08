@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Take a High Resolution Photo with WebRTC</title>
+  <style>
+  .home {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+  }
+  #hiddenCanvas {
+    display: none;
+  }
+
+  .camera {
+  max-width: 100%;
+  }
+
+  .photoTaken {
+    max-width: 100%;
+  }
+  </style>
+</head>
+<body>
+  <div class="home">
+    <h2>Take a Photo with WebRTC</h2>
+    <label>
+      Camera:
+      <select id="cameraSelect"></select>
+    </label>
+    <div>
+      <button id="startCameraBtn">Start Camera</button>
+      <button id="takePhotoBtn">Take Photo</button>
+    </div>
+    <br/>
+    <video class="camera" muted autoplay="autoplay" playsinline="playsinline" webkit-playsinline></video>
+    <br/>
+    <canvas id="hiddenCanvas"></canvas>
+    <img id="photoTaken" />
+  </div>
+  <script>
+  const cameraSelect = document.getElementById("cameraSelect");
+  const video = document.querySelector("video");
+  const canvas = document.getElementById("hiddenCanvas");
+  
+  document.getElementById("startCameraBtn").addEventListener('click', (event) => {
+    console.log("start camera");
+    let options = {};
+    if (cameraSelect.selectedIndex != -1) {
+      options.deviceId = cameraSelect.selectedOptions[0].value;
+    }
+    play(options);
+  });
+  
+  document.getElementById("takePhotoBtn").addEventListener('click', async (event) => {
+    let src;
+    if (imageCapture) {
+      try {
+        let blob = await imageCapture.takePhoto();
+        src = URL.createObjectURL(blob);
+      }catch(e) {
+        src = captureFrame();
+      }
+    }else{
+      src = captureFrame();
+    }
+    document.getElementById("photoTaken").src = src;
+  });
+  
+  let imageCapture;
+  let localStream;
+  let cameraDevices = [];
+  window.onload = async function() {
+    await requestCameraPermission();
+    await loadCameraDevices();
+    loadCameraDevicesToSelect();
+  }
+  
+  async function loadCameraDevices(){
+    const constraints = {video: true, audio: false};
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    for (let i=0;i<devices.length;i++){
+      let device = devices[i];
+      if (device.kind == 'videoinput'){ // filter out audio devices
+        cameraDevices.push(device);
+      }
+    }
+    const tracks = stream.getTracks(); // stop the camera to avoid the NotReadableError
+    for (let i=0;i<tracks.length;i++) {
+      const track = tracks[i];
+      track.stop();
+    }
+  }
+  
+  function loadCameraDevicesToSelect(){
+    for (let i=0;i<cameraDevices.length;i++){
+      let device = cameraDevices[i];
+      cameraSelect.appendChild(new Option(device.label,device.deviceId))
+    }
+  }
+  
+  
+  async function requestCameraPermission() {
+    const constraints = {video: true, audio: false};
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const tracks = stream.getTracks();
+    for (let i=0;i<tracks.length;i++) {
+      const track = tracks[i];
+      track.stop();  // stop the opened camera
+    }
+  }
+  
+  function play(options) {
+    stop(); // close before play
+    let constraints = {};
+  
+    if (options.deviceId){
+      constraints = {
+        video: {deviceId: options.deviceId},
+        audio: false
+      }
+    }else{
+      constraints = {
+        video: true,
+        audio: false
+      }
+    }
+
+
+    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+      localStream = stream;
+      // Attach local stream to video element      
+      video.srcObject = stream;
+      if ("ImageCapture" in window) {
+        const track = localStream.getVideoTracks()[0];
+        imageCapture = new ImageCapture(track);
+      }
+    }).catch(function(err) {
+      console.error('getUserMediaError', err, err.stack);
+    });
+  }
+  
+  function stop() {
+    try{
+      if (localStream){
+        const tracks = localStream.getTracks();
+        for (let i=0;i<tracks.length;i++) {
+          const track = tracks[i];
+          track.stop();
+        }
+      }
+    } catch (e){
+      alert(e.message);
+    }
+  };
+  
+  function captureFrame(){
+    let w = video.videoWidth;
+    let h = video.videoHeight;
+    canvas.width  = w;
+    canvas.height = h;
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg")
+  }
+  </script>
+</body>
+</html>
