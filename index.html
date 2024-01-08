@@ -50,6 +50,7 @@
     <br/>
     <canvas id="hiddenCanvas"></canvas>
     <img id="photoTaken" />
+    <div id="info"></div>
   </div>
   <script>
   const cameraSelect = document.getElementById("cameraSelect");
@@ -87,6 +88,11 @@
     document.getElementById("photoTaken").src = src;
   });
   
+  document.getElementById("photoTaken").onload = function(){
+    let img = document.getElementById("photoTaken");
+    document.getElementById("info").innerText = "Image Width: " + img.naturalWidth +"\nImage Height: " + img.naturalHeight;
+  }
+
   let imageCapture;
   let localStream;
   let cameraDevices = [];
