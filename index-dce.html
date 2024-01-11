@@ -17,13 +17,23 @@
     display: none;
   }
 
-  .camera {
-    display: none;
+  video {
     max-width: 100%;
   }
 
   #photoTaken {
     max-width: 100%;
+  }
+
+  .camera {
+    width: 100%;
+    height: 480px;
+  }
+
+  .dce-video-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
   }
 
   #file {
@@ -123,7 +133,7 @@
   }
 
   async function initDCE(){
-    dce = await CameraEnhancer.createInstance();
+    dce = await Dynamsoft.DCE.CameraEnhancer.createInstance();
     await dce.setUIElement(document.getElementsByClassName("camera")[0]);
   }
   
